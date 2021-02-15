@@ -1,6 +1,6 @@
 ---
 title: "Alcohol vs Seat choice"
-author: "Your Name"
+author: "Anjolie"
 date: "Fall 2020"
 output: html_document
 ---
@@ -12,33 +12,64 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r include=FALSE}
 require(tidyverse)
 require(tigerstats)
-davisdata <- read.csv(file="UCDavis.csv")
-```
-## Our Goal is to answer this question Is there a difference between the alcohol consumed between the row
-## you choose to sit in??
+library(readr)
 
-## Now with ggplot - first select the basic data
-
-```{r}
-basicCN <- ggplot(davisdata,aes(y=alcohol,x=Seat))
+UCDavis <- read_csv("UCDavis.csv") 
+UCDavis <- UCDavis %>%
+  select(Seat, alcohol, GPA)
 ```
-## Now add in boxplot
+# Introduction
 
-```{r}
-basicCN + geom_boxplot()
-```
+$H_0$: There is no difference between the average number of drinks imbibed between people conditioned on the row they sit in.  
   
-  
-### get fancy  
+$H_A$: The average number drinks is different between at least two rows.  
+
+#Results
+
+## Graphical Summary
 
 ```{r}
-basicCN + geom_boxplot(notch=TRUE,outlier.color = "red") + stat_boxplot(geom ='errorbar') + labs(title="Fancy notch boxplot \n with 2 lines")
+pd = position_dodge(width = 0.5) 
+ggplot(UCDavis,aes(y=alcohol,x=Seat)) + stat_boxplot(geom="errorbar", position=pd, width=0.2) + geom_boxplot(notch=FALSE, outlier.color = "red", width=0.5, position=pd) + labs(title="Fancy notch boxplot with 2 lines")
 ```
+When y is the number of drinks consumed and x is the seat position, clearly far more drinks are consumed (in comparison to the number people sitting in each section) in the back than in the front and middle. Front and middle (in drinks) were close to each other.  
 
-## Numerical Summarys 
+```{r}
+pd = position_dodge(width = 0.5) 
+ggplot(drank_only,aes(y=alcohol,x=Seat)) + stat_boxplot(geom="errorbar", position=pd, width=0.2) + geom_boxplot(notch=FALSE, outlier.color = "red", width=0.5, position=pd) + labs(title="Fancy notch boxplot with 2 lines")
+```
+Clearly, the trend of the people sitting the back drinking more than both the front and middle- seaters (which are close in numbers of drinks) continues even when 
 
+### Graphical - considering GPA
+]]alcoVS GPA, GPA ~ seat
+
+## Numerical Summary 
+```{r}
+favstats(alcohol~Seat,data=UCDavis)
+```
+On average, those who sat in the back drank nearly 3 times as much as those in front;  at least half of those in the front drank no alcohol at all. The average numbers of drinks consumed, from back to front, are 9.625, 3.2831, and 1.803; the means are closer between the front and middle than between either of them and the back. 
+
+```{r}
+library(DT)
+alcoData <- data.frame("Position" = c("Back", "Middle", "Front", "All"), "Drank" = c(24,43,13,80), "Refused" = c(8,40,20,68)) %>%
+mutate(all = Drank + Refused) %>%
+mutate(drink_perc = Drank / all)
+datatable(alcoData)
+```
+This table, which takes into account whether students drank or not (but not the quantity) helps explain the summary earlier; it confirms that, for example, 39% in the front drank and thus that more than half in the front (~61% specifically) refused. 
+
+```{r}
+drank_only <- subset(UCDavis,alcohol > 0)
+favstats(alcohol~Seat,data=drank_only)
+```
+When only considering drinkers, and looking at the means:  
+"Back", the section of seats that drank the most, gained the most in value (3.2083) but the least by ratio (increasing by 33%).  
+"Front", the section of seats that drank the least, gained the least in value (2.7729) but the most by ratio (increasing by 154%).  
+This is despite the diferent numbers/ ratios of drinkers vs non- drinkers.  
+### Num. results, considering GPA
+]]
 ## Inferential Tests
-
+]]DON'T use drank_only, too much variance
 ## Conclusions
 
 
