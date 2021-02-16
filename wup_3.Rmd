@@ -97,7 +97,9 @@ model1 <- aov(alcohol~Seat,data=UCDavis)
 summary.aov(model1)
 ```
   
-This is significant enough to warrant Tukey; the p value is at 0.000116, which is less than 0.05, implying that the alternate hypothesis is confirmed.  
+This is significant enough to warrant Tukey. The p value is at 0.000116, which is less than 0.05;  
+Given that the null hypothesis is true, there's a ~0.0116% chance the data will be as it is.  
+This implies that the alternate hypothesis is confirmed.  
 ```{r}
 plot(TukeyHSD(model1))
 ```
