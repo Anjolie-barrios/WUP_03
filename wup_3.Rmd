@@ -16,37 +16,55 @@ library(readr)
 
 UCDavis <- read_csv("UCDavis.csv") 
 UCDavis <- UCDavis %>%
-  select(Seat, alcohol, GPA)
+  select(Seat, alcohol, GPA, class) 
+drank_only <- subset(UCDavis,alcohol > 0)
 ```
 # Introduction
+This report was done to figure out how, if at all, the number of alcoholic drinks consumed by the students at UC Davis ("alcohol") had correlation with the position of their seats.  
 
 $H_0$: There is no difference between the average number of drinks imbibed between people conditioned on the row they sit in.  
   
-$H_A$: The average number drinks is different between at least two rows.  
-
-#Results
-
+$H_A$: The average number of drinks is different between at least two rows.  
+  
 ## Graphical Summary
 
 ```{r}
 pd = position_dodge(width = 0.5) 
-ggplot(UCDavis,aes(y=alcohol,x=Seat)) + stat_boxplot(geom="errorbar", position=pd, width=0.2) + geom_boxplot(notch=FALSE, outlier.color = "red", width=0.5, position=pd) + labs(title="Fancy notch boxplot with 2 lines")
+ggplot(UCDavis,aes(y=alcohol,x=Seat)) + stat_boxplot(geom="errorbar", position=pd, width=0.2) + geom_boxplot(notch=FALSE, outlier.color = "red", width=0.5, position=pd) + labs(title="No. of drinks by seat")
 ```
+  
 When y is the number of drinks consumed and x is the seat position, clearly far more drinks are consumed (in comparison to the number people sitting in each section) in the back than in the front and middle. Front and middle (in drinks) were close to each other.  
 
 ```{r}
 pd = position_dodge(width = 0.5) 
-ggplot(drank_only,aes(y=alcohol,x=Seat)) + stat_boxplot(geom="errorbar", position=pd, width=0.2) + geom_boxplot(notch=FALSE, outlier.color = "red", width=0.5, position=pd) + labs(title="Fancy notch boxplot with 2 lines")
+ggplot(drank_only,aes(y=alcohol,x=Seat)) + stat_boxplot(geom="errorbar", position=pd, width=0.2) + geom_boxplot(notch=FALSE, outlier.color = "red", width=0.5, position=pd) + labs(title="Drinks by seat \n Drinkers only")
 ```
-Clearly, the trend of the people sitting the back drinking more than both the front and middle- seaters (which are close in numbers of drinks) continues even when 
+  
+Clearly, the trend of the people in the back drinking more than both the front and middle- seaters (which are close in numbers of drinks) continues even when non- drinkers are excluded from the data.   
+### Graphical - considering GPA & class
 
-### Graphical - considering GPA
-]]alcoVS GPA, GPA ~ seat
+```{r}
+pd = position_dodge(width = 0.5) 
+ggplot(UCDavis,aes(y=GPA,x=Seat)) + stat_boxplot(geom="errorbar", position=pd, width=0.2) + geom_boxplot(notch=FALSE, outlier.color = "red", width=0.5, position=pd) + labs(title="GPA by Seat")
+```
+
+```{r}
+pd = position_dodge(width = 0.5) 
+ggplot(UCDavis,aes(y=GPA,x=class)) + stat_boxplot(geom="errorbar", position=pd, width=0.2) + geom_boxplot(notch=FALSE, outlier.color = "red", width=0.5, position=pd) + labs(title="GPA by Class")
+```
+
+```{r}
+basicNN <- ggplot(UCDavis,aes(y=GPA,x=alcohol))
+basicNN + geom_point() + labs(title="Drinks VS GPA")
+```
+  
+People in the front or in LibArts classes seemed to get slightly higher grades, but GPA and alcohol don't seem to be closely correlated.  
 
 ## Numerical Summary 
 ```{r}
 favstats(alcohol~Seat,data=UCDavis)
 ```
+  
 On average, those who sat in the back drank nearly 3 times as much as those in front;  at least half of those in the front drank no alcohol at all. The average numbers of drinks consumed, from back to front, are 9.625, 3.2831, and 1.803; the means are closer between the front and middle than between either of them and the back. 
 
 ```{r}
@@ -65,11 +83,25 @@ favstats(alcohol~Seat,data=drank_only)
 When only considering drinkers, and looking at the means:  
 "Back", the section of seats that drank the most, gained the most in value (3.2083) but the least by ratio (increasing by 33%).  
 "Front", the section of seats that drank the least, gained the least in value (2.7729) but the most by ratio (increasing by 154%).  
-This is despite the diferent numbers/ ratios of drinkers vs non- drinkers.  
-### Num. results, considering GPA
-]]
+This is despite the different numbers/ ratios of drinkers vs non- drinkers.  
+### Num. results, considering GPA & major
+```{r}
+cor(GPA~alcohol,data=UCDavis)
+```  
+GPA and alcohol actually have a slightly negative correlation.  
+
 ## Inferential Tests
-]]DON'T use drank_only, too much variance
-## Conclusions
-
-
+Dataset drank_only won't be used, since it has more variance than the original; here only alcohol VS Seat will be tested because they're the only pair of variables left with a significant correlation to each other. 
+```{r}
+model1 <- aov(alcohol~Seat,data=UCDavis)
+summary.aov(model1)
+```
+  
+This is significant enough to warrant Tukey; the p value is at 0.000116, which is less than 0.05, implying that the alternate hypothesis is confirmed.  
+```{r}
+plot(TukeyHSD(model1))
+```
+  
+The means of "middle- front" and "middle- back" being closest to the general mean makes sense. Because there were more than twice as many people sitting in the middle (83) than in the back and front combined (65), the middle has more pull when calculating for general mean.  
+## Conclusions  
+The alternate hypothesis - that the mean number of drinks is different between at least two rows - is confirmed. While people with better grades or in LibArts classes had a slight tendency to sit in the front row and drink slightly less alcohol, clearly the correlation between alcohol and Seat is much stronger. This implies that, since alcohol is usually ordered after seating, seating position directly affects alcohol consumption somehow. People in the back might feel less constrained by societal expectations of being polite, or (more quantifiably) waitresses/ servers might do more rounds in the back rows, increasing the number of chances for people in the back to order a drink.  
